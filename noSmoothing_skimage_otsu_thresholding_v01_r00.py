@@ -28,7 +28,7 @@ from osgeo import gdal
 path_in = "/home/skaiser/permamount/data/remote_sensing/HighResImagery/DigitalGlobe/ftp2.digitalglobe.com/0_preproc_data"
 #fig_out = "/home/skaiser/permamount/staff/soraya_kaiser/git2/2_plots"
 fig_out = "/home/skaiser/permamount/data/remote_sensing/HighResImagery/DigitalGlobe/ftp2.digitalglobe.com/2_plots"
-
+nir_band = 3
 #%%
 
 filenames = []
