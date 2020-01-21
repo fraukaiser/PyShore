@@ -10,20 +10,19 @@ Created on Mon Jan  6 13:53:47 2020
  *
  * usage: python script.py <path_in>
 """
-import sys, os, fnmatch
+import os, fnmatch
 import numpy as np
 import skimage.color
 import skimage.filters
 import skimage.io
 import skimage.viewer
-from matplotlib import pyplot as plt
 from osgeo import gdal
 
 
 
 #%%
 
-# get filename, sigma, and threshold value from command line
+# get path_in
 #path_in = sys.argv[1]
 #path_in = "/home/skaiser/Desktop/Code_Subs_Soraya/HERE/0_preproc_data"
 path_in = "/home/skaiser/permamount/data/remote_sensing/HighResImagery/DigitalGlobe/ftp2.digitalglobe.com/0_preproc_data"
@@ -42,44 +41,10 @@ for root, dirs, files in os.walk(path_in):
             
 for i in input:
     cmd = "gdal_translate -ot Byte -of GTiff %s %s_8B.TIF" %(i, i[:-4])
+    print cmd
     os.system(cmd)
     filenames.append("%s_8B.TIF" %i[:-4])
 
-#%%    user defined t- value 
-#
-#for i in filenames:
-#    image = skimage.io.imread(fname=i)   # image[rows, columns, dimensions]-> image[:,:,3] is near Infrared
-#
-#    nir = image[:,:,3]
-#    gtif = gdal.Open(i)
-#    geotransform = gtif.GetGeoTransform()
-#    sourceSR = gtif.GetProjection()
-#    
-#    x = np.shape(image)[1]
-#    y = np.shape(image)[0]
-#    bands = np.shape(image)[2]
-#    
-# 
-#   
-#    # blur and grayscale before thresholding
-#    blur = skimage.color.rgb2gray(nir)
-#    blur = skimage.filters.gaussian(blur, sigma=2.0)
-#    
-#    # perform inverse binary thresholding
-#    mask = blur < t
-#    
-#    #output np array as GeoTiff
-#    file_out = '%s/%s_mask_t%s.TIF'% (path_in, i.rsplit('/')[-1][:-4], str(t))
-#    dst_ds = gdal.GetDriverByName('GTiff').Create(file_out, x, y, 1, gdal.GDT_Float32)   
-#    dst_ds.GetRasterBand(1).WriteArray(mask)
-#    dst_ds.SetGeoTransform(geotransform)
-#    dst_ds.SetProjection(sourceSR) 
-#    dst_ds.FlushCache()
-#    dst_ds = None
-#    
-#    #polygonize and write to Shapefile
-#    cmd = 'gdal_polygonize.py %s -f "ESRI Shapefile" %s.shp' %(file_out, file_out[:-4])
-#    os.system(cmd)
     
 #%%    Otsu
 
@@ -101,12 +66,12 @@ for i in filenames:
     blur = skimage.filters.gaussian(blur, sigma=2.0)
     
     t = skimage.filters.threshold_otsu(blur)
-#    
+    
     # perform inverse binary thresholding
     mask = blur < t
     
     #output np array as GeoTiff
-    file_out = '%s/%s_mask_t%s_otsu.TIF'% (path_in, i.rsplit('/')[-1][:-4], str(t)[0:4])
+    file_out = '%s/%s_mask_t%s_otsu.TIF'% (fig_out, i.rsplit('/')[-1][:-4], str(t)[0:4])
     dst_ds = gdal.GetDriverByName('GTiff').Create(file_out, x, y, 1, gdal.GDT_Float32)   
     dst_ds.GetRasterBand(1).WriteArray(mask)
     dst_ds.SetGeoTransform(geotransform)
@@ -117,4 +82,4 @@ for i in filenames:
     #polygonize and write to Shapefile
     cmd = 'gdal_polygonize.py %s -f "ESRI Shapefile" %s.shp' %(file_out, file_out[:-4])
     os.system(cmd)    
-
+    print cmd

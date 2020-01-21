@@ -2,7 +2,7 @@
 """
 Created on Mon Jan  6 13:53:47 2020
 
-@author: skaiser
+@author: fraukaiser
 """
 
 """
@@ -10,7 +10,7 @@ Created on Mon Jan  6 13:53:47 2020
  *
  * usage: python Threshold.py <path_in> <threshold>
 """
-import sys, os, fnmatch
+import os, fnmatch
 import numpy as np
 import skimage.color
 import skimage.filters
