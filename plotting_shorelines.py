@@ -8,10 +8,6 @@
 ## Imports
 ####
 
-####
-## Imports
-####
-
 #import argparse
 import os, json, fnmatch
 import numpy as np
