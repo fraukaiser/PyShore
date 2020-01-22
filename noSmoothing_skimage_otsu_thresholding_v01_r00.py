@@ -10,7 +10,7 @@ Created on Mon Jan  6 13:53:47 2020
  *
  * usage: python script.py <path_in>
 """
-import os, fnmatch
+import os, fnmatch, sys
 import numpy as np
 import skimage.color
 import skimage.filters
@@ -23,26 +23,27 @@ from osgeo import gdal
 #%%
 
 # get path_in
-#path_in = sys.argv[1]
+path_in = sys.argv[1]
 #path_in = "/home/skaiser/Desktop/Code_Subs_Soraya/HERE/0_preproc_data"
-path_in = "/home/skaiser/permamount/data/remote_sensing/HighResImagery/DigitalGlobe/ftp2.digitalglobe.com/0_preproc_data"
+#path_in = "/home/skaiser/permamount/data/remote_sensing/HighResImagery/DigitalGlobe/ftp2.digitalglobe.com/0_preproc_data"
 #fig_out = "/home/skaiser/permamount/staff/soraya_kaiser/git2/2_plots"
 path_out = "/permarisk/data/remote_sensing/HighResImagery/DigitalGlobe/ftp2.digitalglobe.com/1_proc_data"
 nir_band = 3
 #%%
 
 filenames = []
-#input = []
-#for root, dirs, files in os.walk(path_in):
-#    for file in files:
-#        if fnmatch.fnmatch(file, '*.TIF'):
-#            filepath = root + '/' + file
-#            input.append(filepath)
+input = []
+for root, dirs, files in os.walk(path_in):
+    for file in files:
+        if fnmatch.fnmatch(file, '*.TIF'):
+            filepath = root + '/' + file
+            input.append(filepath)
             
-input = ['/permarisk/data/remote_sensing/HighResImagery/DigitalGlobe/ftp2.digitalglobe.com/058878563040_01/058878563040_01_P001_MUL/06AUG15222517-M2AS-058878563040_01_P001_GS_pansharpened_cubic_0.5.TIF', 
-         '/permarisk/data/remote_sensing/HighResImagery/DigitalGlobe/ftp2.digitalglobe.com/058878563030_01/058878563030_01_P001_MUL/10JUL09221426-M2AS-058878563030_01_P001_GS_pansharpened_cubic_0.5_1stpoly_warped_16tp.TIF', 
-         '/permarisk/data/remote_sensing/HighResImagery/DigitalGlobe/ftp2.digitalglobe.com/058878563020_01/058878563020_01_P001_MUL/13JUL16225401-M2AS-058878563020_01_P001_GS_pansharpened_cubic_0.5_1stpoly_warped_17tp.TIF', 
-         '/permarisk/data/remote_sensing/HighResImagery/DigitalGlobe/ftp2.digitalglobe.com/058878563010_01/058878563010_01_P001_MUL/16JUL10222531-M2AS-058878563010_01_P001_GS_pansharpened_cubic_0.5_1stpoly_warped_18tp.TIF']            
+#input = ['/permarisk/data/remote_sensing/HighResImagery/DigitalGlobe/ftp2.digitalglobe.com/058878563050_01/058878563050_01_P001_MUL/16AUG27214538-M2AS-058878563050_01_P001_GS_pansharpened_cubic_0.5.TIF']            
+#input = ['/permarisk/data/remote_sensing/HighResImagery/DigitalGlobe/ftp2.digitalglobe.com/058878563040_01/058878563040_01_P001_MUL/06AUG15222517-M2AS-058878563040_01_P001_GS_pansharpened_cubic_0.5.TIF', 
+#         '/permarisk/data/remote_sensing/HighResImagery/DigitalGlobe/ftp2.digitalglobe.com/058878563030_01/058878563030_01_P001_MUL/10JUL09221426-M2AS-058878563030_01_P001_GS_pansharpened_cubic_0.5_1stpoly_warped_16tp.TIF', 
+#         '/permarisk/data/remote_sensing/HighResImagery/DigitalGlobe/ftp2.digitalglobe.com/058878563020_01/058878563020_01_P001_MUL/13JUL16225401-M2AS-058878563020_01_P001_GS_pansharpened_cubic_0.5_1stpoly_warped_17tp.TIF', 
+#         '/permarisk/data/remote_sensing/HighResImagery/DigitalGlobe/ftp2.digitalglobe.com/058878563010_01/058878563010_01_P001_MUL/16JUL10222531-M2AS-058878563010_01_P001_GS_pansharpened_cubic_0.5_1stpoly_warped_18tp.TIF']            
 
 for i in input:
     cmd = "gdal_translate -ot Byte -of GTiff %s %s_8B.TIF" %(i, i[:-4])
