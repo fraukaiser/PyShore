@@ -44,9 +44,9 @@ filenames = []
 #            filepath = root + '/' + file
 #            input.append(filepath)
 #input = ['/permarisk/data/remote_sensing/HighResImagery/DigitalGlobe/ftp2.digitalglobe.com/058878563050_01/058878563050_01_P001_MUL/16AUG27214538-M2AS-058878563050_01_P001_GS_pansharpened_cubic_0.5.TIF']            
-input = ['/permarisk/data/remote_sensing/HighResImagery/DigitalGlobe/ftp2.digitalglobe.com/058878563040_01/058878563040_01_P001_MUL/06AUG15222517-M2AS-058878563040_01_P001_GS_pansharpened_cubic_0.5.TIF', 
-         '/permarisk/data/remote_sensing/HighResImagery/DigitalGlobe/ftp2.digitalglobe.com/058878563030_01/058878563030_01_P001_MUL/10JUL09221426-M2AS-058878563030_01_P001_GS_pansharpened_cubic_0.5_1stpoly_warped_16tp.TIF', 
-         '/permarisk/data/remote_sensing/HighResImagery/DigitalGlobe/ftp2.digitalglobe.com/058878563020_01/058878563020_01_P001_MUL/13JUL16225401-M2AS-058878563020_01_P001_GS_pansharpened_cubic_0.5_1stpoly_warped_17tp.TIF', 
+input = [#'/permarisk/data/remote_sensing/HighResImagery/DigitalGlobe/ftp2.digitalglobe.com/058878563040_01/058878563040_01_P001_MUL/06AUG15222517-M2AS-058878563040_01_P001_GS_pansharpened_cubic_0.5.TIF', 
+         #'/permarisk/data/remote_sensing/HighResImagery/DigitalGlobe/ftp2.digitalglobe.com/058878563030_01/058878563030_01_P001_MUL/10JUL09221426-M2AS-058878563030_01_P001_GS_pansharpened_cubic_0.5_1stpoly_warped_16tp.TIF', 
+         #'/permarisk/data/remote_sensing/HighResImagery/DigitalGlobe/ftp2.digitalglobe.com/058878563020_01/058878563020_01_P001_MUL/13JUL16225401-M2AS-058878563020_01_P001_GS_pansharpened_cubic_0.5_1stpoly_warped_17tp.TIF', 
          '/permarisk/data/remote_sensing/HighResImagery/DigitalGlobe/ftp2.digitalglobe.com/058878563010_01/058878563010_01_P001_MUL/16JUL10222531-M2AS-058878563010_01_P001_GS_pansharpened_cubic_0.5_1stpoly_warped_18tp.TIF']            
 
 for i in input:
@@ -88,7 +88,7 @@ for i in input:
 #
 #  
 #%% Median and Otsu
-value = 3
+value = 9
 
 for i in filenames:
     image = skimage.io.imread(fname=i)   # image[rows, columns, dimensions]-> image[:,:,3] is near Infrared
@@ -109,13 +109,14 @@ for i in filenames:
     blur = skimage.filters.gaussian(blur, sigma=2.0)
     
     t = skimage.filters.threshold_otsu(blur)
+    print t
     
     # perform inverse binary thresholding
     mask = blur < t
     
  
     #output np array as GeoTiff
-    file_out = '%s/%s_t%s_median_otsu.TIF'% (path_out, i.rsplit('/')[-1][:-4], str(t)[0:3])
+    file_out = '%s/%s_t%s_median%s_otsu.TIF'% (path_out, i.rsplit('/')[-1][:-4], str(t)[0:4], str(value))
     dst_ds = gdal.GetDriverByName('GTiff').Create(file_out, x, y, 1, gdal.GDT_Float32)   
     dst_ds.GetRasterBand(1).WriteArray(mask)
     dst_ds.SetGeoTransform(geotransform)
@@ -125,8 +126,9 @@ for i in filenames:
     
     #polygonize and write to Shapefile
     cmd = 'gdal_polygonize.py %s -f "ESRI Shapefile" %s.shp' %(file_out, file_out[:-4])
-    os.system(cmd)    
+    os.system(cmd)   
     print cmd
+	
 
     
 #%%    Otsu
