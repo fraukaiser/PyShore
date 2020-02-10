@@ -35,23 +35,23 @@ start_time = time.time()
 
 #### subs home directory
 #path_in = '/permarisk/data/remote_sensing/HighResImagery/DigitalGlobe/ftp2.digitalglobe.com/1_proc_data'
-path_in = sys.argv[1]
-infrastructure = '/permarisk/staff/soraya_kaiser/git2/0_preproc_data/20190830_NorthSlope_infrastructure_polygon_32606.shp'
+#path_in = sys.argv[1]
+infrastructure = '/permarisk/staff/soraya_kaiser/git2/0_preproc_data/20200205_NorthSlope_infrastructure_polygon_32606.shp'
 gtif_file = '/permarisk/staff/soraya_kaiser/git2/0_preproc_data/06AUG15222517-M2AS-058878563040_01_P001_GS_pansharpened_cubic_0.5_sub.TIF'
-data_out = '/permarisk/staff/soraya_kaiser/git2/1_proc_data/'
-figf_out = '/permarisk/staff/soraya_kaiser/git2/2_plots/'
+data_out = '/permarisk/staff/soraya_kaiser/git2/1_proc_data/median5/'
+figf_out = '/permarisk/staff/soraya_kaiser/git2/2_plots/median5/'
 
-#files_in = ['/permarisk/data/remote_sensing/HighResImagery/DigitalGlobe/ftp2.digitalglobe.com/1_proc_data/06AUG15222517-M2AS-058878563040_01_P001_GS_pansharpened_cubic_0.5_8B_mask_t0.51_otsu.shp',
-#            '/permarisk/data/remote_sensing/HighResImagery/DigitalGlobe/ftp2.digitalglobe.com/1_proc_data/10JUL09221426-M2AS-058878563030_01_P001_GS_pansharpened_cubic_0.5_1stpoly_warped_16tp_8B_mask_t0.51_otsu.shp',
-#            '/permarisk/data/remote_sensing/HighResImagery/DigitalGlobe/ftp2.digitalglobe.com/1_proc_data/13JUL16225401-M2AS-058878563020_01_P001_GS_pansharpened_cubic_0.5_1stpoly_warped_17tp_8B_mask_t0.53_otsu.shp',
-#            '/permarisk/data/remote_sensing/HighResImagery/DigitalGlobe/ftp2.digitalglobe.com/1_proc_data/16JUL10222531-M2AS-058878563010_01_P001_GS_pansharpened_cubic_0.5_1stpoly_warped_18tp_8B_mask_t0.53_otsu.shp']
+files_in = ['/permarisk/data/remote_sensing/HighResImagery/DigitalGlobe/ftp2.digitalglobe.com/1_proc_data/06AUG15222517-M2AS-058878563040_01_P001_GS_pansharpened_cubic_0.5_8B_t0.51_median5_otsu.shp',
+            '/permarisk/data/remote_sensing/HighResImagery/DigitalGlobe/ftp2.digitalglobe.com/1_proc_data/10JUL09221426-M2AS-058878563030_01_P001_GS_pansharpened_cubic_0.5_1stpoly_warped_16tp_8B_t0.51_median5_otsu.shp',
+            '/permarisk/data/remote_sensing/HighResImagery/DigitalGlobe/ftp2.digitalglobe.com/1_proc_data/13JUL16225401-M2AS-058878563020_01_P001_GS_pansharpened_cubic_0.5_1stpoly_warped_17tp_8B_t0.53_median5_otsu.shp',
+            '/permarisk/data/remote_sensing/HighResImagery/DigitalGlobe/ftp2.digitalglobe.com/1_proc_data/16JUL10222531-M2AS-058878563010_01_P001_GS_pansharpened_cubic_0.5_1stpoly_warped_18tp_8B_t0.53_median5_otsu.shp']
 
-files_in = []
-for root, dirs, files in os.walk(path_in):
-    for file in files:
-        if fnmatch.fnmatch(file, '*.shp'):
-            filepath = root + '/' + file
-            files_in.append(filepath)
+#files_in = []
+#for root, dirs, files in os.walk(path_in):
+#    for file in files:
+#        if fnmatch.fnmatch(file, '*.shp'):
+#            filepath = root + '/' + file
+#            files_in.append(filepath)
 
 files_in.sort()
 files_in.append(infrastructure)
