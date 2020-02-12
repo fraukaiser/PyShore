@@ -41,10 +41,10 @@ gtif_file = '/permarisk/staff/soraya_kaiser/git2/0_preproc_data/06AUG15222517-M2
 data_out = '/permarisk/staff/soraya_kaiser/git2/1_proc_data/median5/'
 figf_out = '/permarisk/staff/soraya_kaiser/git2/2_plots/median5/'
 
-files_in = ['/permarisk/data/remote_sensing/HighResImagery/DigitalGlobe/ftp2.digitalglobe.com/1_proc_data/06AUG15222517-M2AS-058878563040_01_P001_GS_pansharpened_cubic_0.5_8B_t0.51_median5_otsu.shp',
-            '/permarisk/data/remote_sensing/HighResImagery/DigitalGlobe/ftp2.digitalglobe.com/1_proc_data/10JUL09221426-M2AS-058878563030_01_P001_GS_pansharpened_cubic_0.5_1stpoly_warped_16tp_8B_t0.51_median5_otsu.shp',
-            '/permarisk/data/remote_sensing/HighResImagery/DigitalGlobe/ftp2.digitalglobe.com/1_proc_data/13JUL16225401-M2AS-058878563020_01_P001_GS_pansharpened_cubic_0.5_1stpoly_warped_17tp_8B_t0.53_median5_otsu.shp',
-            '/permarisk/data/remote_sensing/HighResImagery/DigitalGlobe/ftp2.digitalglobe.com/1_proc_data/16JUL10222531-M2AS-058878563010_01_P001_GS_pansharpened_cubic_0.5_1stpoly_warped_18tp_8B_t0.53_median5_otsu.shp']
+files_in = ['/permarisk/data/remote_sensing/HighResImagery/DigitalGlobe/ftp2.digitalglobe.com/1_proc_data/06AUG15222517-M2AS-058878563040_01_P001_GS_pansharpened_cubic_0.5_8B_t0.51_median5_otsu_ordershp.shp',
+            '/permarisk/data/remote_sensing/HighResImagery/DigitalGlobe/ftp2.digitalglobe.com/1_proc_data/10JUL09221426-M2AS-058878563030_01_P001_GS_pansharpened_cubic_0.5_1stpoly_warped_16tp_8B_t0.51_median5_otsu_ordershp.shp',
+            '/permarisk/data/remote_sensing/HighResImagery/DigitalGlobe/ftp2.digitalglobe.com/1_proc_data/13JUL16225401-M2AS-058878563020_01_P001_GS_pansharpened_cubic_0.5_1stpoly_warped_17tp_8B_t0.53_median5_otsu_ordershp.shp',
+            '/permarisk/data/remote_sensing/HighResImagery/DigitalGlobe/ftp2.digitalglobe.com/1_proc_data/16JUL10222531-M2AS-058878563010_01_P001_GS_pansharpened_cubic_0.5_1stpoly_warped_18tp_8B_t0.53_median5_otsu_ordershp.shp']
 
 #files_in = []
 #for root, dirs, files in os.walk(path_in):
