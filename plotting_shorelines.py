@@ -266,10 +266,15 @@ with open('new_dict.txt', 'w') as file:
 
 #class_features
 class_features_new = []
-
+names_out = range(0,16)
+count = 0 
 for i in class_features:
     lake_id = []
     class_array = []
+    ####
+    i.to_csv(figf_out + 'ts%s.csv' % str(names_out[count]))
+    count += 1
+    ####
     for index, row in i.iterrows():
         try:
             lakeid = row['id_right'] #### and index_right
@@ -399,10 +404,85 @@ for y in range(len(class_features_new)-4):  #
 #            gdf_comp.to_file(figf_out + 'gdf_ts%s_lake%s.shp' % (str(ts_comp), str(lake_id)), driver = 'ESRI Shapefile')
         
         except:
-            print 'empty sequence'
+            fi = open(figf_out + 'gdf_tsref%s_tscomp%s_lake%s.txt' % (str(ts_ref), str(ts_comp), str(lake_id)), "w")
+            fi.write("empty sequence")
+            fi.close()
+
+
+#%% Nearest Points for cumulative results:
+
+figf_out = '/permarisk/staff/soraya_kaiser/git2/2_plots/median5/cum/'
+
+
+for y in range(8, 16):  # 
+    if y < 12:
+        df1 = class_features_new[y-8]
+        ts_ref = int(y-8)
+    else: 
+        df1 = class_features_new[y-12]
+        ts_ref = int(y-12)
+
+    df2 = class_features_new[y]     # is new
+
+    lake_ids1 = df1.lake_id.unique()
+    lake_ids2 = df2.lake_id.unique()
+    lake_ids = np.unique(np.append(lake_ids1,lake_ids2))
+
+    lake_ids = lake_ids.astype(int)
+    ts_comp = int(y)
+    
+    for lake_id in lake_ids:
+        #get points as xy array from reference dataframe
+        points = df1[(df1['lake_id']==lake_id)]
+        x = np.asarray(points.geometry.x)
+        y = np.asarray(points.geometry.y)
+        xy_ref = np.transpose(np.vstack((x,y)))
+        
+        #get points as xy array from dataframe to which ref is compared
+        points = df2[(df2['lake_id']==lake_id)]
+        x = np.asarray(points.geometry.x)
+        y = np.asarray(points.geometry.y)
+        xy_comp = np.transpose(np.vstack((x,y)))
+        
+        #note that it is important to not use lists but to transfere them first in to arrays in order to benefit from vector calculation
+        distances = distance.cdist(xy_ref, xy_comp)
+        try:
+            min_dist_idy = np.argmin(distances,axis=1)
+            min_distances = np.min(distances,axis=1)
+        
+            #claculate direction between reference points and comp points
+            p_n = xy_comp[min_dist_idy] - xy_ref 
+            #get direction in degree clockwise from north
+            direction = np.rad2deg(np.arctan2(p_n[:,0], p_n[:,1]))
+            direction[(direction<0)] = 360 + direction[(direction<0)] 
+            
+            # write reference to file
+            gdf_ref = gpd.GeoDataFrame(
+                crs = {'init': 'epsg:32606'},
+                geometry=[Point(xy) for xy in zip(xy_ref[:, 0], xy_ref[:, 1])])
+            gdf_ref['distance'] = min_distances
+            gdf_ref['direction'] = direction
+            gdf_ref['min_dist_idy'] = min_dist_idy
+            print figf_out + 'gdf_tsref%s_cum_tscomp%s_lake%s.csv' % (str(ts_ref), str(ts_comp), str(lake_id))
+            gdf_ref.to_csv(figf_out + 'gdf_tsref%s_cum_tscomp%s_lake%s.csv' % (str(ts_ref), str(ts_comp), str(lake_id)))
+#            gdf_ref.to_file(figf_out + 'gdf_ts%s_lake%s.shp' % (str(ts_ref), str(lake_id)), driver = 'ESRI Shapefile')
+            
+#            # write comp to file
+#            gdf_comp = gpd.GeoDataFrame(
+#                crs = {'init': 'epsg:32606'},
+#                geometry=[Point(xy) for xy in zip(xy_comp[:, 0], xy_comp[:, 1])])
+#            print figf_out + 'gdf_ts%s_lake%s.csv' % (str(ts_comp), str(lake_id))
+#            gdf_comp.to_csv(figf_out + 'gdf_ts%s_lake%s.csv' % (str(ts_comp), str(lake_id)))
+##            gdf_comp.to_file(figf_out + 'gdf_ts%s_lake%s.shp' % (str(ts_comp), str(lake_id)), driver = 'ESRI Shapefile')
+        
+        except:
+            fi = open(figf_out + 'gdf_tsref%s_tscomp%s_lake%s.txt' % (str(ts_ref), str(ts_comp), str(lake_id)), "w")
+            fi.write("empty sequence")
+            fi.close()
+
 
 #%%
-    
+
 now = datetime.datetime.now()
 print 'started at %s,  finished at %s' % (str(start), str(now))  
 print 'Total computing time: --------------- %s seconds -----------------' % (time.time() - start_time)
