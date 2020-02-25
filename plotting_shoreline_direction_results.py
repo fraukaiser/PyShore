@@ -16,6 +16,7 @@ files_in_cum = ['/home/skaiser/permamount/staff/soraya_kaiser/git2/2_plots/media
 path_in = '/home/skaiser/permamount/staff/soraya_kaiser/git2/2_plots/median5'
 figf_out = '/home/skaiser/permamount/staff/soraya_kaiser/git2/2_plots/'
 today = datetime.date.today()
+#%%
 
 files_2006 = []
 files_2010 = []
@@ -58,7 +59,7 @@ for root, dirs, files in os.walk(path_in):
 files_in_cum = [files_2006, files_2006_2013, files_2006_2016]
 
 
-#%% Create means of movement and direction and merge them into one dataframe
+#%% FIXED Create means of movement and direction and merge them into one dataframe
 years = ['2006-2010', '2010-2013', '2013-2016']
 dfs = []
 count = 0
@@ -66,7 +67,7 @@ dirs = []
 mean_dfs = []
 empty = []
 
-for i in files_in:
+for i in files_in[1:2]:
     print count
     for y in i:
 
@@ -75,7 +76,9 @@ for i in files_in:
         try:
     
             df = pd.read_csv(y)
+            df.head()
            
+            dirs = []            
             direction = np.array(df['direction'])
             dir_mean = np.mean(df['direction'])
             mv_mean = np.mean(df['distance'])
@@ -210,28 +213,218 @@ merged.to_csv(figf_out + 'median5/%s_mean_diffs_data.csv' % (str(today.year) + s
 
 #%% Minimize data
 
-df = pd.read_csv(figf_out + 'median5/%s_mean_diffs_data.csv' % (str(today.year) + str(today.month) + str(today.day)))
+df = pd.read_csv(figf_out + 'median5/%s_mean_diffs_data.csv' % (str(today.year) + str(today.month) + str(today.day-1)))
 df.columns
 df = df.drop(['Unnamed: 0', 'Unnamed: 0.1', 'geometry'], axis = 1)
 
 #%% Scatter Plot
 
-x_val = np.array(df.area) # neeeee, HIER DIE DIFFS
-y_val = np.array(df.mv)
+x_val = np.array(df['diff'])/ float(1000) # neeeee, HIER DIE DIFFS
+y_val = np.array(df['mv'])
 
+### Analyze the data beforehand
+bp = plt.boxplot(x_val)
+res  = {}
+for key, value in bp.items():
+    res[key] = [v.get_data() for v in value]
+    
+#%% Stat Stuff
+    
+q75, q25 = np.percentile(x_val, [75 ,25])
+iqr = q75 - q25
+data_max = q75 + 1.5*iqr
+data_min = q25 - 1.5*iqr
+
+#%%    
 #plt.scatter(x, y)
 
 types = np.array(df.id_right)
- 
+
+fig, ax = plt.subplots(figsize = (16,8)) 
 for i,type in enumerate(types):
     x = x_val[i]
     y = y_val[i]
-    plt.scatter(x, y, marker='x', color='red')
+    ax.scatter(x, y, marker='x', color='red')
     plt.text(x+0.3, y+0.3, type, fontsize=9)
-plt.xlim(0, 150000)
-plt.ylim(0, 70)
+#plt.xlim(data_min - 100, data_max + 100)
+plt.xlim(q25 - 50 , q75 + 50)
+plt.ylim(0, np.max(y_val) + 10)
 plt.show()
 
+#%% FIXED Batch Scatter Plotting
+files_in = ['/home/skaiser/Desktop/scatter/2020224_mean_diffs_data_2006-2010.csv', 
+            '/home/skaiser/Desktop/scatter/2020224_mean_diffs_data_2010-2013.csv', 
+            '/home/skaiser/Desktop/scatter/2020224_mean_diffs_data_2013-2016.csv'
+            ]
+
+for i in files_in:
+    
+    df = pd.read_csv(i)
+    df = df.drop(['Unnamed: 0', 'Unnamed: 0.1', 'geometry'], axis = 1)
+    x_val = np.array(df['diff'])/ float(10000) 
+    y_val = np.array(df['mv'])
+    types = np.array(df['id_right'])
+    title = i.rsplit('/')[-1][8:-4]
+
+    q75, q25 = np.percentile(x_val, [75 ,25])
+    iqr = q75 - q25
+    data_max = q75 + 1.5*iqr
+    data_min = q25 - 1.5*iqr
+
+    fig, ax = plt.subplots(figsize = (10,6)) 
+    for i,type in enumerate(types):
+        x = x_val[i]
+        y = y_val[i]
+        ax.scatter(x, y, marker='x', color='red')
+        if title == 'mean_diffs_data_2013-2016':
+            plt.text(x+0.03, y+0.03, type, fontsize=8)
+        else:
+            plt.text(x+0.3, y+0.3, type, fontsize=8)
+
+    plt.title(title)
+#    plt.show()
+    plt.savefig(figf_out + "%s_%s.pdf" % (str(today.year) + str(today.month) + str(today.day), title), dpi=300, orientation='landscape', format='pdf')
+
+
+#%% Fixed Batch Scatter Plotting for most of the data
+files_in = ['/home/skaiser/Desktop/scatter/2020224_mean_diffs_data_2006-2010.csv', 
+            '/home/skaiser/Desktop/scatter/2020224_mean_diffs_data_2010-2013.csv', 
+            '/home/skaiser/Desktop/scatter/2020224_mean_diffs_data_2013-2016.csv'
+            ]
+
+for i in files_in:
+    df = pd.read_csv(i)
+    df = df.drop(['Unnamed: 0', 'Unnamed: 0.1', 'geometry'], axis = 1)
+    x_val = np.array(df['diff'])/ float(10000) 
+    y_val = np.array(df['mv'])
+    types = np.array(df['id_right'])
+    title = i.rsplit('/')[-1][8:-4]
+    
+    x_val_max = np.max(x_val)
+    x_q75, x_q25 = np.percentile(x_val, [75 ,25])
+    x_iqr = x_q75 - x_q25
+    x_max = x_q75 + 1.5*x_iqr
+    x_min = x_q25 - 1.5*x_iqr
+
+    y_val_max = np.max(y_val)  
+    y_q75, y_q25 = np.percentile(y_val, [75 ,25])
+    y_iqr = y_q75 - y_q25
+    y_max = y_q75 + 1.5*y_iqr
+    y_min = y_q25 - 1.5*y_iqr    
+          
+    ###
+    
+    fig, ax = plt.subplots(figsize = (10,6)) 
+    for i,type in enumerate(types):
+        x = x_val[i]
+        y = y_val[i]
+        ax.scatter(x, y, marker='x', color='orange')
+        if title == 'mean_diffs_data_2006-2010':
+            plt.xlim(-0.5, 2)
+            plt.ylim(0, 10)
+        elif title == 'mean_diffs_data_2010-2013':
+            plt.xlim(-5, 5)
+            plt.ylim(0, 45)
+        else:
+            plt.xlim(-2, 2)
+            plt.ylim(0, 50)
+            
+        plt.text(x+0.02, y+0.05, type, fontsize=7)    
+    plt.title(title)
+#    plt.show()
+    fig.savefig(figf_out + "%s_%s_whiskers.pdf" % (str(today.year) + str(today.month) + str(today.day), title), dpi=300, orientation='landscape', format='pdf')
+    
+#%% EXP Batch Scatter Plotting for positive outliers (x_val)
+files_in = ['/home/skaiser/Desktop/scatter/2020224_mean_diffs_data_2006-2010.csv', 
+            '/home/skaiser/Desktop/scatter/2020224_mean_diffs_data_2010-2013.csv', 
+            '/home/skaiser/Desktop/scatter/2020224_mean_diffs_data_2013-2016.csv'
+            ]
+
+
+for i in files_in[:1]:
+    fliers_pos = []
+    df = pd.read_csv(i)
+    df = df.drop(['Unnamed: 0', 'Unnamed: 0.1', 'geometry'], axis = 1)
+    x_val = np.array(df['diff'])/ float(10000) # now in hectar
+    y_val = np.array(df['mv'])
+    types = np.array(df['id_right'])
+    title = i.rsplit('/')[-1][:-4]
+
+    x_q75, x_q25 = np.percentile(x_val, [75 ,25])
+    x_iqr = x_q75 - x_q25
+    x_max = x_q75 + 1.5*x_iqr
+    x_min = x_q25 - 1.5*x_iqr
+    for x in x_val:
+        if x > x_max:
+            fliers_pos.append(x)
+
+    y_q75, y_q25 = np.percentile(y_val, [75 ,25])
+    y_iqr = y_q75 - y_q25
+    y_max = y_q75 + 1.5*y_iqr
+    y_min = y_q25 - 1.5*y_iqr    
+    
+    fig, ax = plt.subplots(figsize = (8,6)) 
+    for i,type in enumerate(types):
+        x = x_val[i]
+        y = y_val[i]
+        ax.scatter(x, y, marker='x', color='orange')
+        plt.text(x+0.3, y+0.3, type, fontsize=7)
+        
+    # zoom-in / limit the view to different portions of the data
+    ax.set_ylim(y_max + 1, y_val_max + 5)  # outliers only positive
+    ax.set_xlim(x_max + 1, x_val_max + 5)
+   
+   
+        
+    plt.title(title)
+    plt.show()
+    fig.savefig(figf_out + "%s_%s_pos_fliers.pdf" % (str(today.year) + str(today.month) + str(today.day), title), dpi=300, orientation='landscape', format='pdf')
+    
+#%% EXP Batch Scatter Plotting for negative outliers (x_val)
+files_in = ['/home/skaiser/Desktop/scatter/2020224_mean_diffs_data_2006-2010.csv', 
+            '/home/skaiser/Desktop/scatter/2020224_mean_diffs_data_2010-2013.csv', 
+            '/home/skaiser/Desktop/scatter/2020224_mean_diffs_data_2013-2016.csv'
+            ]
+
+for i in files_in:
+    fliers_neg = []
+    df = pd.read_csv(i)
+    df = df.drop(['Unnamed: 0', 'Unnamed: 0.1', 'geometry'], axis = 1)
+    x_val = np.array(df['diff'])/ float(10000) # now in hectar
+    y_val = np.array(df['mv'])
+    types = np.array(df['id_right'])
+    title = i.rsplit('/')[-1][:-4]
+
+    x_q75, x_q25 = np.percentile(x_val, [75 ,25])
+    x_iqr = x_q75 - x_q25
+    x_max = x_q75 + 1.5*x_iqr
+    x_min = x_q25 - 1.5*x_iqr
+    for x in x_val:
+        if x < x_min:
+            fliers_neg.append(x) 
+
+    y_q75, y_q25 = np.percentile(y_val, [75 ,25])
+    y_iqr = y_q75 - y_q25
+    y_max = y_q75 + 1.5*y_iqr
+    y_min = y_q25 - 1.5*y_iqr    
+    
+    fig, ax = plt.subplots(figsize = (8,6)) 
+    for i,type in enumerate(types):
+        x = x_val[i]
+        y = y_val[i]
+        ax.scatter(x, y, marker='x', color='green')
+        plt.text(x+0.3, y+0.3, type, fontsize=7)
+        
+    # zoom-in / limit the view to different portions of the data
+    ax.set_ylim(y_min, np.max(y_val) + 5)  # outliers only positive
+    ax.set_xlim(np.min(fliers_neg) + 2, np.min(x_val) - 5)
+   
+   
+        
+    plt.title(title)
+    plt.show()
+    fig.savefig(figf_out + "%s_%s_neg_fliers.pdf" % (str(today.year) + str(today.month) + str(today.day), title), dpi=300, orientation='landscape', format='pdf')
+    
 
 #%%
 years = ['2006-2010', '2010-2013', '2013-2016']
@@ -324,7 +517,7 @@ for i in files_in_cum:
     count += 1
 #%%
 colors = [i.upper() for i in ['#1b9e77','#d95f02','#7570b3']]
-#%%
+#%% FIXED Plot pivot table
 
 n123 = pd.concat(dfs)
 
@@ -333,7 +526,8 @@ title = 'Direction and Magnitude of Shoreline Movement'
 plt.title(title)
 plt.xlabel('Direction')
 plt.ylabel('[m]')
-plt.savefig(figf_out + "%s_%s.pdf" % (str(today.year) + str(today.month) + str(today.day), title))
+plt.show()
+#plt.savefig(figf_out + "%s_%s.pdf" % (str(today.year) + str(today.month) + str(today.day), title))
 #%%
 
 cum_n123 = pd.concat(cum_dfs)
@@ -343,7 +537,8 @@ title = 'Direction and Magnitude of Shoreline Movement Cumulative'
 plt.title(title)
 plt.xlabel('Direction')
 plt.ylabel('[m]')
-plt.savefig(figf_out + "%s_%s.pdf" % (str(today.year) + str(today.month) + str(today.day), title))
+plt.show()
+#plt.savefig(figf_out + "%s_%s.pdf" % (str(today.year) + str(today.month) + str(today.day), title))
 
 #%%
 
