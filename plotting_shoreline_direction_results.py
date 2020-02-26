@@ -58,6 +58,87 @@ for root, dirs, files in os.walk(path_in):
                 
 files_in_cum = [files_2006, files_2006_2013, files_2006_2016]
 
+#%% FIXED Create means of movement and direction and merge them into one dataframe WITHOUT fliers
+years = ['2006-2010', '2010-2013', '2013-2016']
+dfs = []
+count = 0
+dirs = []
+mean_dfs = []
+empty = []
+
+for i in files_in:
+    print count
+    for y in i:
+
+        lake_id = y.rsplit('/')[-1][:-4]
+        print lake_id
+        try:
+    
+            df = pd.read_csv(y)
+           
+            dirs = []            
+            direction = np.array(df['direction'])
+            movement = np.array(df['distance'])
+            
+            dir_mean = np.mean(df['direction'])
+            mv_mean = np.mean(df['distance'])
+            
+            
+            q25, q50, q75 = np.percentile(movement, [25,50,75])
+            iqr = q75-q25
+            val_max = q75 + 1.5*iqr
+            val_min = q25 - 1.5*iqr
+            
+            fliers = [val_min < x < val_max for x in movement] 
+            print val_min, val_max, iqr           
+            
+            df['filter'] = fliers
+            
+            outliers = df['filter']
+            filtered = []
+            count_o = 0
+            
+            for y in outliers:
+#                print count_o
+                if y == True:
+                    z = movement[count_o]
+                else:
+                    z = np.nan
+                filtered.append(z)
+                count_o += 1
+                       
+          
+            for i in direction:
+                if 22.5 <= i < 67.5:
+                    y = 'NE'
+                elif 67.5 <= i < 112.5:
+                    y = 'E'
+                elif 112.5 <= i < 157.5:
+                    y = 'SE'
+                elif 157.5 <= i < 202.5:
+                    y = 'S'
+                elif 202.5 <= i < 247.5:   
+                    y = 'SW'
+                elif 247.5 <= i < 292.5:
+                    y = 'W'
+                elif 292.5 <= i < 337.5:
+                    y = 'NW'
+                else:
+                    y = 'N'
+                dirs.append(y)
+            mean_df = pd.DataFrame({'lake': lake_id, 'dir': dir_mean, 'mv': mv_mean, 'years': years[count]}, index = [0])   
+            mean_dfs.append(mean_df)       
+            df['outliers'] = filtered             
+            df['category'] = dirs
+            df['year'] = [years[count]] * len(direction)
+            df = df.drop(['Unnamed: 0', 'geometry', 'direction', 'min_dist_idy'], axis = 1)
+            dfs.append(df)
+        except:
+            empty.append(lake_id)
+    count += 1
+    
+    
+data = pd.concat(mean_dfs)
 
 #%% FIXED Create means of movement and direction and merge them into one dataframe
 years = ['2006-2010', '2010-2013', '2013-2016']
@@ -521,13 +602,13 @@ colors = [i.upper() for i in ['#1b9e77','#d95f02','#7570b3']]
 
 n123 = pd.concat(dfs)
 
-n123.pivot_table(columns = "year", index = "category", values = "distance", aggfunc = np.mean).plot.bar(figsize = (10,6), color = colors)
-title = 'Direction and Magnitude of Shoreline Movement'
+n123.pivot_table(columns = "year", index = "category", values = "outliers", aggfunc = np.mean).plot.bar(figsize = (10,6), color = colors)
+title = 'Direction and Magnitude of Shoreline Movement (without outliers)'
 plt.title(title)
 plt.xlabel('Direction')
 plt.ylabel('[m]')
-plt.show()
-#plt.savefig(figf_out + "%s_%s.pdf" % (str(today.year) + str(today.month) + str(today.day), title))
+#plt.show() # in order for plt.savefig to work you need to uncomment this line
+plt.savefig(figf_out + "%s_%s.pdf" % (str(today.year) + str(today.month) + str(today.day), title.replace(' ', '_')))
 #%%
 
 cum_n123 = pd.concat(cum_dfs)
