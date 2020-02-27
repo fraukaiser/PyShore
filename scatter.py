@@ -5,13 +5,7 @@ import geopandas as gpd
 import datetime
 import fnmatch, os
 from shapely import wkt
-
-#%%
-### Files for Testing
-
-files_in = ['/home/skaiser/permamount/staff/soraya_kaiser/git2/2_plots/median5/gdf_ts0_lake138.csv', '/home/skaiser/permamount/staff/soraya_kaiser/git2/2_plots/median5/gdf_ts4_lake138.csv', '/home/skaiser/permamount/staff/soraya_kaiser/git2/2_plots/median5/gdf_ts8_lake138.csv']
-files_in_cum = ['/home/skaiser/permamount/staff/soraya_kaiser/git2/2_plots/median5/gdf_ts0_lake138.csv', '/home/skaiser/permamount/staff/soraya_kaiser/git2/2_plots/median5/cum/gdf_tsref0_cum_tscomp8_lake138.csv', '/home/skaiser/permamount/staff/soraya_kaiser/git2/2_plots/median5/cum/gdf_tsref0_cum_tscomp12_lake138.csv']
-
+import matplotlib.patches as mpatches
 #%%
 path_in = '/home/skaiser/permamount/staff/soraya_kaiser/git2/2_plots/median5'
 figf_out = '/home/skaiser/permamount/staff/soraya_kaiser/git2/2_plots/'
@@ -38,25 +32,6 @@ for root, dirs, files in os.walk(path_in):
                 files_2013.append(filepath)
 
 files_in = [files_2006, files_2010, files_2013]
-#%%  FIXED Load .csv files for shoreline movement rates (for each point of each lake) CUMULATIVE
-path_in = '/home/skaiser/permamount/staff/soraya_kaiser/git2/2_plots/median5/cum'
-
-
-files_2006_2013 = []
-files_2006_2016 = []
-
-for root, dirs, files in os.walk(path_in):
-    for file in files:
-        for i in range(8,12):
-            if fnmatch.fnmatch(file, '*tscomp%s_*.csv' % i):
-                filepath = root + '/' + file
-                files_2006_2013.append(filepath)
-        for i in range(12,16):
-            if fnmatch.fnmatch(file, '*tscomp%s_*.csv' % i):
-                filepath = root + '/' + file
-                files_2006_2016.append(filepath)
-                
-files_in_cum = [files_2006, files_2006_2013, files_2006_2016]
 
 #%% FIXED Create means of movement and direction and merge them into one dataframe WITHOUT fliers
 years = ['2006-2010', '2010-2013', '2013-2016']
@@ -143,59 +118,6 @@ data = pd.concat(mean_dfs)
 ####
 # Should output dfs and mean_dfs of length 470 and an arrary empty of length 195 (makes a total of 665 lakes)
 
-#%% FIXED Create means of movement and direction and merge them into one dataframe
-years = ['2006-2010', '2010-2013', '2013-2016']
-dfs = []
-count = 0
-dirs = []
-mean_dfs = []
-empty = []
-
-for i in files_in[1:2]:
-    print count
-    for y in i:
-
-        lake_id = y.rsplit('/')[-1][:-4]
-        print lake_id
-        try:
-    
-            df = pd.read_csv(y)
-            df.head()
-           
-            dirs = []            
-            direction = np.array(df['direction'])
-            dir_mean = np.mean(df['direction'])
-            mv_mean = np.mean(df['distance'])
-            for i in direction:
-                if 22.5 <= i < 67.5:
-                    y = 'NE'
-                elif 67.5 <= i < 112.5:
-                    y = 'E'
-                elif 112.5 <= i < 157.5:
-                    y = 'SE'
-                elif 157.5 <= i < 202.5:
-                    y = 'S'
-                elif 202.5 <= i < 247.5:   
-                    y = 'SW'
-                elif 247.5 <= i < 292.5:
-                    y = 'W'
-                elif 292.5 <= i < 337.5:
-                    y = 'NW'
-                else:
-                    y = 'N'
-                dirs.append(y)
-            mean_df = pd.DataFrame({'lake': lake_id, 'dir': dir_mean, 'mv': mv_mean, 'years': years[count]}, index = [0])   
-            mean_dfs.append(mean_df)       
-            df['category'] = dirs
-            df['year'] = [years[count]] * len(direction)
-            df = df.drop(['Unnamed: 0', 'geometry', 'direction', 'min_dist_idy'], axis = 1)
-            dfs.append(df)
-        except:
-            empty.append(lake_id)
-    count += 1
-    
-    
-data = pd.concat(mean_dfs)
 
 #%% Convert mean directions in degree to string and save to dataframe
 dirs = []
@@ -223,7 +145,7 @@ for i in direction:
     dirs.append(y)
     
 data['category'] = dirs
-data.to_csv(figf_out + 'median5/%s_mean_data.csv' % (str(today.year) + str(today.month) + str(today.day)))       
+#data.to_csv(figf_out + 'median5/%s_mean_data.csv' % (str(today.year) + str(today.month) + str(today.day)))       
 
 #%%
 ##
@@ -256,7 +178,7 @@ for i in range(0, 16):
     gdfs.append(gdf)
     
 
-#%% loop through gdfs to calculate area 
+#%% loop through gdfs to calculate area diffs
 #diffs = []
 diff_gdfs = []
 
@@ -289,87 +211,64 @@ for y in range(len(gdfs)-4):  #
     df1.head()
         
 data_diff = pd.concat(gdfs[0:12])
+
+### should output data_diff with length of 653 containing areas and area_diffs of polygon lakes
 #%%
 
 merged = data_diff.merge(data, on = 'lake')
 
-merged.to_csv(figf_out + 'median5/%s_mean_diffs_data.csv' % (str(today.year) + str(today.month) + str(today.day)))
+### should output merged gdf with length of the smaller DataFrame (data = 470)
 
-#%% Minimize data
+#merged.to_csv(figf_out + 'median5/%s_mean_diffs_data.csv' % (str(today.year) + str(today.month) + str(today.day)))
+#%% FIXED tesing multiple datasets in one scatter
 
-df = pd.read_csv(figf_out + 'median5/%s_mean_diffs_data.csv' % (str(today.year) + str(today.month) + str(today.day-1)))
-df.columns
-df = df.drop(['Unnamed: 0', 'Unnamed: 0.1', 'geometry'], axis = 1)
 
-#%% Scatter Plot
+mat = np.random.randint(10, size=(6, 4))
+df = pd.DataFrame(mat, columns=['A', 'B', 'C', 'D'])
+x1, x2, y1, y2 = [df.A, df.B, df.C, df.D]
 
-x_val = np.array(df['diff'])/ float(1000) # neeeee, HIER DIE DIFFS
-y_val = np.array(df['mv'])
+fig = plt.figure()
+ax = fig.add_subplot(111)
 
-### Analyze the data beforehand
-bp = plt.boxplot(x_val)
-res  = {}
-for key, value in bp.items():
-    res[key] = [v.get_data() for v in value]
-    
-#%% Stat Stuff
-    
-q75, q25 = np.percentile(x_val, [75 ,25])
-iqr = q75 - q25
-data_max = q75 + 1.5*iqr
-data_min = q25 - 1.5*iqr
-
-#%%    
-#plt.scatter(x, y)
-
-types = np.array(df.id_right)
-
-fig, ax = plt.subplots(figsize = (16,8)) 
-for i,type in enumerate(types):
-    x = x_val[i]
-    y = y_val[i]
-    ax.scatter(x, y, marker='x', color='red')
-    plt.text(x+0.3, y+0.3, type, fontsize=9)
-#plt.xlim(data_min - 100, data_max + 100)
-plt.xlim(q25 - 50 , q75 + 50)
-plt.ylim(0, np.max(y_val) + 10)
+ax.scatter(x1, y1, s=10, c='b', marker="s", label='first')
+ax.scatter(x2, y2, s=10, c='r', marker="o", label='second')
+plt.legend(loc='upper left');
 plt.show()
 
-#%% FIXED Batch Scatter Plotting
-files_in = ['/home/skaiser/Desktop/scatter/2020224_mean_diffs_data_2006-2010.csv', 
-            '/home/skaiser/Desktop/scatter/2020224_mean_diffs_data_2010-2013.csv', 
-            '/home/skaiser/Desktop/scatter/2020224_mean_diffs_data_2013-2016.csv'
-            ]
+#%% FIXED Scatter Plot for all timesteps
+#plt.scatter(x, y)
 
-for i in files_in:
-    
-    df = pd.read_csv(i)
-    df = df.drop(['Unnamed: 0', 'Unnamed: 0.1', 'geometry'], axis = 1)
-    x_val = np.array(df['diff'])/ float(10000) 
-    y_val = np.array(df['mv'])
-    types = np.array(df['id_right'])
-    title = i.rsplit('/')[-1][8:-4]
+x_s = [np.array(merged[merged.years == '2006-2010']['diff']), np.array(merged[merged.years == '2010-2013']['diff']), np.array(merged[merged.years == '2013-2016']['diff'])]
+y_s = [np.array(merged[merged.years == '2006-2010']['mv']), np.array(merged[merged.years == '2010-2013']['mv']), np.array(merged[merged.years == '2013-2016']['mv'])]
+types_s = [np.array(merged[merged.years == '2006-2010']['id_right']), np.array(merged[merged.years == '2010-2013']['id_right']), np.array(merged[merged.years == '2013-2016']['id_right'])]
+colors = [i.upper() for i in ['#1b9e77','#d95f02','#7570b3']]
+labels = ['2006-2010', '2010-2013', '2013-2016']
 
-    q75, q25 = np.percentile(x_val, [75 ,25])
-    iqr = q75 - q25
-    data_max = q75 + 1.5*iqr
-    data_min = q25 - 1.5*iqr
+#%% FIXED For paper (labels must be turned on and changed in title) with fliers
 
-    fig, ax = plt.subplots(figsize = (6,6)) 
-    for i,type in enumerate(types):
-        x = x_val[i]
-        y = y_val[i]
-        ax.scatter(x, y, marker='x', color='red')
-        if title == 'mean_diffs_data_2013-2016':
-            plt.text(x+0.05, y+0.03, type, fontsize=8)
-        else:
-            plt.text(x+0.5, y+0.3, type, fontsize=8)
+fig = plt.figure(figsize = (8, 8))
+ax = fig.add_subplot(111)
+title = 'Scatter ALL timesteps with fliers no labeling'
+ 
+for j in range(0,3):
+    x_val = x_s[j]/ float(10000) 
+    y_val = y_s[j]
+    types = types_s[j]
+    color = colors[j]    
+    label = labels[j]
 
-    plt.title(title)
-    plt.xlabel('Area Change [ha]')
-    plt.ylabel('Shoreline Movement [m]')
-#    plt.show()
-    plt.savefig(figf_out + "%s_%s.pdf" % (str(today.year) + str(today.month) + str(today.day), title), dpi=300, orientation='landscape', format='pdf')
+    ax.scatter(x_val, y_val, marker='x', color = color, label=label, alpha = 0.7)
+#    for i,type in enumerate(types):                         # uncomment these lines to turn off labeling
+#        x = x_val[i]                                        #
+#        y = y_val[i]                                        #
+#        plt.text(x+0.3, y+0.3, type, fontsize=9)            #
+plt.title(title)
+plt.xlabel('Area Change [ha]')
+plt.ylabel('Shoreline Movement [m]')
+plt.legend(loc = 'upper left')
+#plt.show()
+plt.savefig(figf_out + "%s_%s.pdf" % (str(today.year) + str(today.month) + str(today.day), title.replace(' ', '_')), dpi=300, orientation='landscape', format='pdf')
+
 #%% EXP Batch Scatter Plotting NO FLIERS
 files_in = ['/home/skaiser/Desktop/scatter/2020226_mean_diffs_data_2006-2010.csv', 
             '/home/skaiser/Desktop/scatter/2020226_mean_diffs_data_2010-2013.csv', 
@@ -492,189 +391,10 @@ for i in files_in:
     plt.show()
 #    fig.savefig(figf_out + "%s_%s_whiskers.pdf" % (str(today.year) + str(today.month) + str(today.day), title), dpi=300, orientation='landscape', format='pdf')
     
-#%% EXP Batch Scatter Plotting for positive outliers (x_val)
-files_in = ['/home/skaiser/Desktop/scatter/2020224_mean_diffs_data_2006-2010.csv', 
-            '/home/skaiser/Desktop/scatter/2020224_mean_diffs_data_2010-2013.csv', 
-            '/home/skaiser/Desktop/scatter/2020224_mean_diffs_data_2013-2016.csv'
-            ]
 
 
-for i in files_in[:1]:
-    fliers_pos = []
-    df = pd.read_csv(i)
-    df = df.drop(['Unnamed: 0', 'Unnamed: 0.1', 'geometry'], axis = 1)
-    x_val = np.array(df['diff'])/ float(10000) # now in hectar
-    y_val = np.array(df['mv'])
-    types = np.array(df['id_right'])
-    title = i.rsplit('/')[-1][:-4]
 
-    x_q75, x_q25 = np.percentile(x_val, [75 ,25])
-    x_iqr = x_q75 - x_q25
-    x_max = x_q75 + 1.5*x_iqr
-    x_min = x_q25 - 1.5*x_iqr
-    for x in x_val:
-        if x > x_max:
-            fliers_pos.append(x)
 
-    y_q75, y_q25 = np.percentile(y_val, [75 ,25])
-    y_iqr = y_q75 - y_q25
-    y_max = y_q75 + 1.5*y_iqr
-    y_min = y_q25 - 1.5*y_iqr    
-    
-    fig, ax = plt.subplots(figsize = (8,6)) 
-    for i,type in enumerate(types):
-        x = x_val[i]
-        y = y_val[i]
-        ax.scatter(x, y, marker='x', color='orange')
-        plt.text(x+0.3, y+0.3, type, fontsize=7)
-        
-    # zoom-in / limit the view to different portions of the data
-    ax.set_ylim(y_max + 1, y_val_max + 5)  # outliers only positive
-    ax.set_xlim(x_max + 1, x_val_max + 5)
-   
-   
-        
-    plt.title(title)
-    plt.show()
-    fig.savefig(figf_out + "%s_%s_pos_fliers.pdf" % (str(today.year) + str(today.month) + str(today.day), title), dpi=300, orientation='landscape', format='pdf')
-    
-#%% EXP Batch Scatter Plotting for negative outliers (x_val)
-files_in = ['/home/skaiser/Desktop/scatter/2020224_mean_diffs_data_2006-2010.csv', 
-            '/home/skaiser/Desktop/scatter/2020224_mean_diffs_data_2010-2013.csv', 
-            '/home/skaiser/Desktop/scatter/2020224_mean_diffs_data_2013-2016.csv'
-            ]
-
-for i in files_in:
-    fliers_neg = []
-    df = pd.read_csv(i)
-    df = df.drop(['Unnamed: 0', 'Unnamed: 0.1', 'geometry'], axis = 1)
-    x_val = np.array(df['diff'])/ float(10000) # now in hectar
-    y_val = np.array(df['mv'])
-    types = np.array(df['id_right'])
-    title = i.rsplit('/')[-1][:-4]
-
-    x_q75, x_q25 = np.percentile(x_val, [75 ,25])
-    x_iqr = x_q75 - x_q25
-    x_max = x_q75 + 1.5*x_iqr
-    x_min = x_q25 - 1.5*x_iqr
-    for x in x_val:
-        if x < x_min:
-            fliers_neg.append(x) 
-
-    y_q75, y_q25 = np.percentile(y_val, [75 ,25])
-    y_iqr = y_q75 - y_q25
-    y_max = y_q75 + 1.5*y_iqr
-    y_min = y_q25 - 1.5*y_iqr    
-    
-    fig, ax = plt.subplots(figsize = (8,6)) 
-    for i,type in enumerate(types):
-        x = x_val[i]
-        y = y_val[i]
-        ax.scatter(x, y, marker='x', color='green')
-        plt.text(x+0.3, y+0.3, type, fontsize=7)
-        
-    # zoom-in / limit the view to different portions of the data
-    ax.set_ylim(y_min, np.max(y_val) + 5)  # outliers only positive
-    ax.set_xlim(np.min(fliers_neg) + 2, np.min(x_val) - 5)
-   
-   
-        
-    plt.title(title)
-    plt.show()
-    fig.savefig(figf_out + "%s_%s_neg_fliers.pdf" % (str(today.year) + str(today.month) + str(today.day), title), dpi=300, orientation='landscape', format='pdf')
-    
-
-#%%
-years = ['2006-2010', '2010-2013', '2013-2016']
-dfs = []
-count = 0
-
-mean_dfs = []
-for i in files_in:
-    print count
-    for y in i:
-        lake_id = y.rsplit('/')[-1][:-4]
-    
-        try: 
-            df = pd.read_csv(y)
-            print y
-        
-            direction = np.array(df['direction'])
-            dir_mean = np.mean(df['direction'])
-            mv_mean = np.mean(df['distance'])
-            for i in direction:
-                if 22.5 <= i < 67.5:
-                    y = 'NE'
-                elif 67.5 <= i < 112.5:
-                    y = 'E'
-                elif 112.5 <= i < 157.5:
-                    y = 'SE'
-                elif 157.5 <= i < 202.5:
-                    y = 'S'
-                elif 202.5 <= i < 247.5:   
-                    y = 'SW'
-                elif 247.5 <= i < 292.5:
-                    y = 'W'
-                elif 292.5 <= i < 337.5:
-                    y = 'NW'
-                else:
-                    y = 'N'
-                dirs.append(y)
-        
-                        
-            df['category'] = dirs
-            df['year'] = [years[count]] * len(direction)
-            df = df.drop(['Unnamed: 0', 'geometry', 'direction', 'min_dist_idy'], axis = 1)
-            dfs.append(df)
-        except: 
-            print 'empty sequence'
-            
-    count += 1
-
-#%%
-
-cum_years = ['2006-2010', '2006-2013', '2006-2016']
-cum_dfs = []
-count = 0
-
-for i in files_in_cum:
-    print count
-    for y in i:
-        try: 
-            df = pd.read_csv(y)
-            print y
-        
-            direction = np.array(df['direction'])
-            dirs = []
-            for i in direction:
-                if 22.5 <= i < 67.5:
-                    y = 'NE'
-                elif 67.5 <= i < 112.5:
-                    y = 'E'
-                elif 112.5 <= i < 157.5:
-                    y = 'SE'
-                elif 157.5 <= i < 202.5:
-                    y = 'S'
-                elif 202.5 <= i < 247.5:   
-                    y = 'SW'
-                elif 247.5 <= i < 292.5:
-                    y = 'W'
-                elif 292.5 <= i < 337.5:
-                    y = 'NW'
-                else:
-                    y = 'N'
-                dirs.append(y)
-        
-            df['category'] = dirs
-            df['year'] = [cum_years[count]] * len(direction)
-            df = df.drop(['Unnamed: 0', 'geometry', 'direction', 'min_dist_idy'], axis = 1)
-            cum_dfs.append(df)
-        except: 
-            print 'empty sequence'
-            
-    count += 1
-#%%
-colors = [i.upper() for i in ['#1b9e77','#d95f02','#7570b3']]
 #%% FIXED Plot pivot table
 
 n123 = pd.concat(dfs)
