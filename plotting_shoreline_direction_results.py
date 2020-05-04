@@ -770,4 +770,56 @@ ax.boxplot(data, 0, '')
 
 plt.show()
     
+#%% UPDATE 20200504
 
+dir_medians = []
+dir_means = []
+lake_ids = []
+directions = []
+
+for i in files_in:
+    print count
+    for y in i:
+
+        lake_id = y.rsplit('/')[-1][:-4]
+        lake_ids.append(lake_id)
+        try:
+
+            df = pd.read_csv(y)
+
+            direction = np.array(df['direction'])
+            dir_mean = np.mean(direction)
+            dir_median = np.median(direction)
+            if 22.5 <= dir_mean < 67.5:
+                y = 'NE'
+            elif 67.5 <= dir_mean < 112.5:
+                y = 'E'
+            elif 112.5 <= dir_mean < 157.5:
+                y = 'SE'
+            elif 157.5 <= dir_mean < 202.5:
+                y = 'S'
+            elif 202.5 <= dir_mean < 247.5:   
+                y = 'SW'
+            elif 247.5 <= dir_mean < 292.5:
+                y = 'W'
+            elif 292.5 <= dir_mean < 337.5:
+                y = 'NW'
+            else:
+                y = 'N'
+        except:
+            dir_mean = np.nan
+            dir_median = np.nan
+            y = np.nan
+        
+        dir_medians.append(dir_median)
+        dir_means.append(dir_mean)
+        directions.append(y)
+
+#%% Write to file
+
+df = pd.DataFrame()
+df['lake_id'] = lake_ids
+df['dir_means'] = dir_means
+df['dir_medians'] = dir_medians
+df['mean_directions'] = directions
+df.to_csv(figf_out + str(today.year) + str(today.month) + str(today.day) + '_plotting_directions.csv')
