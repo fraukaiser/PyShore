@@ -10,7 +10,7 @@ Created on Mon Jan  6 13:53:47 2020
  *
  * usage: python script.py <path_in>
 """
-import os, fnmatch, sys
+import os
 import numpy as np
 import skimage.color
 import skimage.filters
@@ -19,7 +19,6 @@ import skimage.viewer
 from osgeo import gdal
 import datetime, time
 from skimage.morphology import disk
-from matplotlib import pyplot as plt
 
 start = datetime.datetime.now()
 start_time = time.time()
@@ -52,41 +51,10 @@ input = ['/permarisk/data/remote_sensing/HighResImagery/DigitalGlobe/ftp2.digita
 for i in input:
     cmd = "gdal_translate -ot Byte -of GTiff %s %s_8B.TIF" %(i, i[:-4])
     print cmd
-#    os.system(cmd)
+    os.system(cmd)
     filenames.append("%s_8B.TIF" %i[:-4])
 
-#%% Bilateral Filtering
-#
-#value = range(1,20,2)
-#   
-#for i in value:
-#    bilat_img = skimage.filters.rank.mean_bilateral(nir, disk(20), s0=10,s1=10)
-#    fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(10, 10), sharex='row', sharey='row')
-#
-#    ax = axes.ravel()
-#    
-#    ax[0].imshow(nir, cmap=plt.cm.gray)
-#    ax[0].set_title('Original')
-#
-#    ax[1].imshow(bilat_img, cmap=plt.cm.gray)
-#    ax[1].set_title('Bilateral %s' % str(i))  
-#
-#    
-#%% Median Filtering
-#
-#for i in value:
-#    bilat_img = skimage.filters.rank.median(nir, disk(i))
-#    fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(10, 10), sharex='row', sharey='row')
-#
-#    ax = axes.ravel()
-#    
-#    ax[0].imshow(nir, cmap=plt.cm.gray)
-#    ax[0].set_title('Original')
-#
-#    ax[1].imshow(bilat_img, cmap=plt.cm.gray)
-#    ax[1].set_title('Bilateral %s' % str(i))  
-#
-#  
+
 #%% Median and Otsu
 value = 5
 clips = []
@@ -132,45 +100,6 @@ for i in filenames:
 	
 
     
-#%%    Otsu
-
-#for i in filenames:
-#    image = skimage.io.imread(fname=i)   # image[rows, columns, dimensions]-> image[:,:,3] is near Infrared
-#
-#    nir = image[:,:,nir_band]
-#    gtif = gdal.Open(i)
-#    geotransform = gtif.GetGeoTransform()
-#    sourceSR = gtif.GetProjection()
-#    
-#    x = np.shape(image)[1]
-#    y = np.shape(image)[0]
-#    bands = np.shape(image)[2]
-#    
-#   
-#    # blur and grayscale before thresholding
-#    blur = skimage.color.rgb2gray(nir)
-#    blur = skimage.filters.gaussian(blur, sigma=2.0)
-#    
-#    t = skimage.filters.threshold_otsu(blur)
-#    
-#    # perform inverse binary thresholding
-#    mask = blur < t
-#    
-#    #output np array as GeoTiff
-#    file_out = '%s/%s_mask_t%s_otsu.TIF'% (path_out, i.rsplit('/')[-1][:-4], str(t)[0:4])
-#    dst_ds = gdal.GetDriverByName('GTiff').Create(file_out, x, y, 1, gdal.GDT_Float32)   
-#    dst_ds.GetRasterBand(1).WriteArray(mask)
-#    dst_ds.SetGeoTransform(geotransform)
-#    dst_ds.SetProjection(sourceSR) 
-#    dst_ds.FlushCache()
-#    dst_ds = None
-#    
-#    #polygonize and write to Shapefile
-#    cmd = 'gdal_polygonize.py %s -f "ESRI Shapefile" %s.shp' %(file_out, file_out[:-4])
-#    os.system(cmd)    
-#    print cmd
-#%%
-
 order_shape = '/home/skaiser/permamount/data/remote_sensing/HighResImagery/DigitalGlobe/ftp2.digitalglobe.com/058878563050_01/GIS_FILES/058878563050_01_ORDER_SHAPE_32606.shp'
 
 for i in clips:
