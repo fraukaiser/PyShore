@@ -36,16 +36,17 @@ start_time = time.time()
 #### subs home directory
 #path_in = '/permarisk/data/remote_sensing/HighResImagery/DigitalGlobe/ftp2.digitalglobe.com/1_proc_data'
 #path_in = sys.argv[1]
-infrastructure = '/permarisk/staff/soraya_kaiser/git2/0_preproc_data/20200205_NorthSlope_infrastructure_polygon_32606.shp'
-gtif_file = '/permarisk/staff/soraya_kaiser/git2/0_preproc_data/06AUG15222517-M2AS-058878563040_01_P001_GS_pansharpened_cubic_0.5_sub.TIF'
-data_out = '/permarisk/staff/soraya_kaiser/git2/1_proc_data/median5/'
-figf_out = '/permarisk/staff/soraya_kaiser/git2/2_plots/median5/'
+infrastructure = '/home/skaiser/permamount/staff/soraya_kaiser/git2/0_preproc_data/20200205_NorthSlope_infrastructure_polygon_32606.shp'
+gtif_file = '/home/skaiser/permamount/staff/soraya_kaiser/git2/0_preproc_data/06AUG15222517-M2AS-058878563040_01_P001_GS_pansharpened_cubic_0.5_sub.TIF'
+data_out = '/home/skaiser/permamount/staff/soraya_kaiser/git2/1_proc_data/median5/'
+figf_out = '/home/skaiser/permamount/staff/soraya_kaiser/git2/2_plots/median5/'
 
-files_in = ['/permarisk/data/remote_sensing/HighResImagery/DigitalGlobe/ftp2.digitalglobe.com/1_proc_data/06AUG15222517-M2AS-058878563040_01_P001_GS_pansharpened_cubic_0.5_8B_t0.51_median5_otsu_ordershp.shp',
-            '/permarisk/data/remote_sensing/HighResImagery/DigitalGlobe/ftp2.digitalglobe.com/1_proc_data/10JUL09221426-M2AS-058878563030_01_P001_GS_pansharpened_cubic_0.5_1stpoly_warped_16tp_8B_t0.51_median5_otsu_ordershp.shp',
-            '/permarisk/data/remote_sensing/HighResImagery/DigitalGlobe/ftp2.digitalglobe.com/1_proc_data/13JUL16225401-M2AS-058878563020_01_P001_GS_pansharpened_cubic_0.5_1stpoly_warped_17tp_8B_t0.53_median5_otsu_ordershp.shp',
-            '/permarisk/data/remote_sensing/HighResImagery/DigitalGlobe/ftp2.digitalglobe.com/1_proc_data/16JUL10222531-M2AS-058878563010_01_P001_GS_pansharpened_cubic_0.5_1stpoly_warped_18tp_8B_t0.53_median5_otsu_ordershp.shp']
+#files_in = ['/permarisk/data/remote_sensing/HighResImagery/DigitalGlobe/ftp2.digitalglobe.com/1_proc_data/06AUG15222517-M2AS-058878563040_01_P001_GS_pansharpened_cubic_0.5_8B_t0.51_median5_otsu_ordershp.shp',
+#            '/permarisk/data/remote_sensing/HighResImagery/DigitalGlobe/ftp2.digitalglobe.com/1_proc_data/10JUL09221426-M2AS-058878563030_01_P001_GS_pansharpened_cubic_0.5_1stpoly_warped_16tp_8B_t0.51_median5_otsu_ordershp.shp',
+#            '/permarisk/data/remote_sensing/HighResImagery/DigitalGlobe/ftp2.digitalglobe.com/1_proc_data/13JUL16225401-M2AS-058878563020_01_P001_GS_pansharpened_cubic_0.5_1stpoly_warped_17tp_8B_t0.53_median5_otsu_ordershp.shp',
+#            '/permarisk/data/remote_sensing/HighResImagery/DigitalGlobe/ftp2.digitalglobe.com/1_proc_data/16JUL10222531-M2AS-058878563010_01_P001_GS_pansharpened_cubic_0.5_1stpoly_warped_18tp_8B_t0.53_median5_otsu_ordershp.shp']
 
+files_in = ['/home/skaiser/permamount/data/remote_sensing/HighResImagery/DigitalGlobe/ftp2.digitalglobe.com/1_proc_data/16AUG27214538-M2AS-058878563050_01_P001_GS_pansharpened_cubic_0.5_8B_t0.53_median5_otsu.shp']
 #files_in = []
 #for root, dirs, files in os.walk(path_in):
 #    for file in files:
@@ -59,7 +60,9 @@ files_in.append(infrastructure)
 gtif = gdal.Open(gtif_file)
 gtif_info = gtif.GetGeoTransform()
 resolution = gtif_info[1]
-sitename = 'Deadhorse'
+#sitename = 'Deadhorse'
+sitename = 'MP 396'
+
 site = gtif_file.rsplit('/')[-1][:-4]
 #sitename = site.rsplit('-')[-1]
 print "The spatial resolution of the %s data is %s m" %(sitename, str(resolution))
@@ -238,7 +241,7 @@ for i in storage_joined:
         class_names.append(classname)
         y = i.loc[(minimum[min_max_count] <= i.area) & (i.area < maximum[min_max_count])].copy()
         try: 
-            #y.to_file(data_out + classname + '.shp', driver = 'ESRI Shapefile') # uncommenting this solved the issue of "is empty" for classes from first_01! How? Why?
+            y.to_file(data_out + classname + '.shp', driver = 'ESRI Shapefile') # uncommenting this solved the issue of "is empty" for classes from first_01! How? Why?
             print classname, ':', len(y)
         except:
             print classname + ' is empty' # apparently after ref every class is empty, no output as shapefile
