@@ -20,9 +20,9 @@ The binary information (water vs. non-water) is subsequently vectorized for usag
 
 Usage: `python plotting_shorelines.py <path_in> <sitename>` 
 
-- path_in should contain your OSM infrastructure Shapefiles and the ouput of Smoothing_skimage_otsu_median_thresholding.py 
+- `<path_in>` should contain your OSM infrastructure Shapefiles and the ouput of Smoothing_skimage_otsu_median_thresholding.py 
 
-- sitename user chosen string for naming the output files. 
+- `<sitename>` user chosen string for naming the output files. 
 
 Uses the shapefile output from the first script and the infrastructure data (both stored in path_in) as input and extracts the waterbodies. It removes infrastructure elements and filters for waterbodies > 0.1 ha. An intermediate output is stored in "1_PyShore_ProcData".
 In the subsequent nearest points analysis each shoreline vertex from one date to the nearest vertex of the following date is correlated. The distance and angle between correlated verttexes are calculated and saves as an attribute value for each point of the dataset. 
