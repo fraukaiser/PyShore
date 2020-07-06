@@ -20,7 +20,7 @@ The binary information (water vs. non-water) is subsequently vectorized for usag
 
 Usage: `python plotting_shorelines.py <path_in> <sitename>` 
 
-- `<path_in>` should contain your OSM infrastructure Shapefiles and the ouput of Smoothing_skimage_otsu_median_thresholding.py 
+- `<path_in>` folder containing your OSM infrastructure Shapefiles and the ouput of Smoothing_skimage_otsu_median_thresholding.py 
 
 - `<sitename>` user chosen string for naming the output files. 
 
@@ -30,8 +30,10 @@ The resulting lakeID attribute table is saved to a .csv-file (folder "2_PyShore_
 
 ## Visualisation
 
-#### BatchCSVtoSHP.py converts every lakeID.csv file to an ESRI Shapefile for visualisation. 
+#### BatchCSVtoSHP.py 
+Converts every lakeID.csv file to an ESRI Shapefile for visualisation. 
 
-#### batchloadcsv_qgs.py allows batch import to QGIS 2.18+
+#### batchloadcsv_qgs.py 
+Allows batch import to QGIS 2.18+
 
 
