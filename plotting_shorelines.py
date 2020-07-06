@@ -1,20 +1,21 @@
-#!/usr/bin/env python
-# coding: utf-8
+# -*- coding: utf-8 -*-
+"""
+Edited on Mon Jul  6 11:07:27 2020
 
-# In[1]:
-'''
+@author: fraukaiser
+
+
 Calculating shoreline movement of multitemporal dataset
 
-Usage: python plotting_shorelines.py <path_in>
+Usage: python plotting_shorelines.py <path_in> <sitename>
 
-
-'''
+"""
+#%%
 
 ####
 ## Imports
 ####
 
-#import argparse
 import os, json, fnmatch, sys
 import numpy as np
 from osgeo import gdal, ogr
@@ -24,6 +25,24 @@ from shapely.wkt import loads
 import datetime, time
 from scipy.spatial import distance
 
+#%% Functions
+
+def createFolder(directory):  # from https://gist.github.com/keithweaver/562d3caa8650eefe7f84fa074e9ca949
+    try:
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+    except OSError:
+        print ('Error: Creating directory. ' +  directory)
+        
+        
+        
+def segmentize(geom):
+    wkt = geom.wkt  # shapely Polygon to wkt
+    geom = ogr.CreateGeometryFromWkt(wkt)  # create ogr geometry
+    geom.Segmentize(resolution)  # densify geometry
+    wkt2 = geom.ExportToWkt()  # ogr geometry to wkt
+    new = loads(wkt2)  # wkt to shapely Polygon
+    return new 
 
 #%%
 
@@ -33,82 +52,91 @@ start_time = time.time()
 
 # In[2]:
 
-#### subs home directory
-#path_in = '/permarisk/data/remote_sensing/HighResImagery/DigitalGlobe/ftp2.digitalglobe.com/1_proc_data'
-#path_in = sys.argv[1]
-infrastructure = '/home/skaiser/permamount/staff/soraya_kaiser/git2/0_preproc_data/20200205_NorthSlope_infrastructure_polygon_32606.shp'
-gtif_file = '/home/skaiser/permamount/staff/soraya_kaiser/git2/0_preproc_data/06AUG15222517-M2AS-058878563040_01_P001_GS_pansharpened_cubic_0.5_sub.TIF'
-data_out = '/home/skaiser/permamount/staff/soraya_kaiser/git2/1_proc_data/median5/'
-figf_out = '/home/skaiser/permamount/staff/soraya_kaiser/git2/2_plots/median5/'
 
-#files_in = ['/permarisk/data/remote_sensing/HighResImagery/DigitalGlobe/ftp2.digitalglobe.com/1_proc_data/06AUG15222517-M2AS-058878563040_01_P001_GS_pansharpened_cubic_0.5_8B_t0.51_median5_otsu_ordershp.shp',
-#            '/permarisk/data/remote_sensing/HighResImagery/DigitalGlobe/ftp2.digitalglobe.com/1_proc_data/10JUL09221426-M2AS-058878563030_01_P001_GS_pansharpened_cubic_0.5_1stpoly_warped_16tp_8B_t0.51_median5_otsu_ordershp.shp',
-#            '/permarisk/data/remote_sensing/HighResImagery/DigitalGlobe/ftp2.digitalglobe.com/1_proc_data/13JUL16225401-M2AS-058878563020_01_P001_GS_pansharpened_cubic_0.5_1stpoly_warped_17tp_8B_t0.53_median5_otsu_ordershp.shp',
-#            '/permarisk/data/remote_sensing/HighResImagery/DigitalGlobe/ftp2.digitalglobe.com/1_proc_data/16JUL10222531-M2AS-058878563010_01_P001_GS_pansharpened_cubic_0.5_1stpoly_warped_18tp_8B_t0.53_median5_otsu_ordershp.shp']
 
-files_in = ['/home/skaiser/permamount/data/remote_sensing/HighResImagery/DigitalGlobe/ftp2.digitalglobe.com/1_proc_data/16AUG27214538-M2AS-058878563050_01_P001_GS_pansharpened_cubic_0.5_8B_t0.53_median5_otsu.shp']
-#files_in = []
-#for root, dirs, files in os.walk(path_in):
-#    for file in files:
-#        if fnmatch.fnmatch(file, '*.shp'):
-#            filepath = root + '/' + file
-#            files_in.append(filepath)
+#path_in = '/your/path/to/your/input/data'
+path_in = sys.argv[1]
+sitename = sys.argv[2]
 
+
+#### Load satellite images and infrastructure data
+files_in = []
+infrastructure_in = []
+tif_in = []
+
+for root, dirs, files in os.walk(path_in):
+    for file in files:
+        if fnmatch.fnmatch(file, '*1.shp'):
+            filepath = root + '/' + file
+            infrastructure_in.append(filepath)
+        elif fnmatch.fnmatch(file, '*otsu_ordershp.shp'):
+            filepath = root + '/' + file
+            files_in.append(filepath)
+        elif fnmatch.fnmatch(file, '*.TIF'):
+            filepath = root + '/' + file
+            tif_in.append(filepath)
+            
+            
 files_in.sort()
-files_in.append(infrastructure)
+tif_in.sort()
+#print files_in, tif_in, infrastructure_in
 
-gtif = gdal.Open(gtif_file)
+gtif = gdal.Open(tif_in[0])
 gtif_info = gtif.GetGeoTransform()
 resolution = gtif_info[1]
-#sitename = 'Deadhorse'
-sitename = 'MP 396'
 
-site = gtif_file.rsplit('/')[-1][:-4]
-#sitename = site.rsplit('-')[-1]
-print "The spatial resolution of the %s data is %s m" %(sitename, str(resolution))
-print site 
 
+site = tif_in[0].rsplit('/')[-1][:-4]
+print "The spatial resolution is %s m" %(str(resolution))
 print 'files_in length: ', len(files_in)
 
 
+#%% Create Folders for Output
+data_out = path_in.rsplit('/', 1)[0] + '/1_PyShore_ProcData/'
+figf_out = path_in.rsplit('/', 1)[0] + '/2_PyShore_Output/'
+createFolder(data_out)
+createFolder(figf_out)
 
-# In[3]:
+#%% Check for Line Geometries in infrastructure data, buffer and merge
+
+gdfs = []
+for i in infrastructure_in:
+    gdf = gpd.read_file(i)
+
+    for y in gdf.type[:1]:
+        if y == 'LineString':
+            print 'yes'
+            buffered = gdf.buffer(0.0003)
+            gdf['geometry'] = buffered
+            print 'buffered'
+        else:
+            print 'no'     
+
+    gdfs.append(gdf)
+    
+osm = gdfs[0].append(gdfs[1:])
+osm.to_file(path_in.rsplit('/', 1)[0] + '/1_PyShore_ProcData/' + 'infrastructuremap.shp')
 
 
-## convert shapes to gdfs
-reference = gpd.read_file(files_in[0])
-osm = gpd.read_file(files_in[len(files_in)-1])
+### To Do: Clip Infrastructure map to site extent: %s_infrastructuremap.shp % sitename
+
+#%% convert multi-temporal shapefiles to gdfs
+
+reference = gpd.read_file(files_in[0]) # set reference for shoreline change
 print "The reference file is " + files_in[0]
-print "File %s contains the osm infrastructure" %str(files_in[len(files_in)-1])
 
-shapes = files_in[:len(files_in)-1]
+shapes = files_in[1:len(files_in)]
 
-# in case of Deadhorse and CNSC: Four timesteps
-timestep_names = ['ref', 'first', 'second', 'third', 'fourth'] # to access current set of data: until len(files_in)-1
+timestep_names = [str(i) for i in range(0, len(files_in))]
+
 storage = [reference]
-for i in shapes[1:len(files_in)-1]:
+for i in shapes:
     y = gpd.read_file(i)
     storage.append(y)
 
 print 'storage length: ', len(storage)
 
-# In[7]:
-
-
-#####
-## Functions
-####
-
-def segmentize(geom):
-    wkt = geom.wkt  # shapely Polygon to wkt
-    geom = ogr.CreateGeometryFromWkt(wkt)  # create ogr geometry
-    geom.Segmentize(resolution)  # densify geometry
-    wkt2 = geom.ExportToWkt()  # ogr geometry to wkt
-    new = loads(wkt2)  # wkt to shapely Polygon
-    return new 
-
-
-# In[8]:
+#%% Remove non-water features
 
 
 ## DN = 1: feature is waterbody
@@ -119,12 +147,7 @@ for i in storage:
     storage_water.append(y)
 
     
-osm['osm_id'] = np.array(range(len(osm)))
-
-
-# ### Drop features containing infrastructure (osm data) and filter for features > 0.1 ha
-
-# In[9]:
+#%% Drop features containing infrastructure (osm data) and filter for features > 0.1 ha
 
 
 storage_infrastructure = []
@@ -133,28 +156,28 @@ for i in storage_water:
     print count
     i.crs = reference.crs
     fname = timestep_names[count]
-    i.to_file(data_out + "%s_%s.shp" %(sitename, fname), driver = 'ESRI Shapefile')
-    print "%s_%s written to file" %(sitename, fname)
+    i.to_file(data_out + "%s_%s.shp" %(fname, sitename), driver = 'ESRI Shapefile')
+    print "%s_%s written to file" %(fname, sitename)
     print "overlay infrastructure"
     x = gpd.overlay(i, osm, how = 'intersection')
     y = np.ndarray.tolist(np.array(x.id))
     z = i[~i['id'].isin(y)]
     print "Filter feature > 0.1 ha"
     xyz = z.loc[z.area > 1000].copy()
-    xyz.to_file(data_out + "%s_%s_water_ni.shp" %(sitename, fname), driver = 'ESRI Shapefile')
-    print "%s_%s_water_ni written to file" %(sitename, fname)
+    xyz.to_file(data_out + "%s_%s_water_ni.shp" %(fname, sitename), driver = 'ESRI Shapefile')
+    print "%s_%s_water_ni written to file" %(fname, sitename)
     storage_infrastructure.append(xyz)
     count = count + 1
 
 
-# 
+#%% Exit script when no multi-temporal files are inserted
 
-# ## Merge smaller moist feature to one lake by setting the ref dataset as basis
+if len(files) == 1:
+    sys.exit()
 
-# In[10]:
 
+#%% Merge smaller moist feature to one lake by setting the ref dataset as basis
 
-storage_merged = [storage_infrastructure[0]]
 print len(storage_infrastructure[0])
 for i in storage_infrastructure[1:]:
     x = gpd.sjoin(i, storage_infrastructure[0], op ='intersects', how = 'left')
@@ -166,14 +189,6 @@ for i in storage_infrastructure[1:]:
 # #### ref id needs to be transformed to id_right
 storage_merged[0]['id_right'] = storage_merged[0]['id']   
 
-
-# In[11]:
-
-
-#for i in storage_merged:
-#    i.plot(color='#FBFAF9', alpha= 0.3, edgecolor= 'darkred')
-
-
 # In[12]:
 
 
@@ -181,7 +196,7 @@ count = 1
 storage_joined = []
 for i in storage_merged[1:]:
     joined = i.merge(storage_merged[0], on = 'id_right')
-    fname = "%s_%s_water_ni_joined" %(sitename, timestep_names[count])
+    fname = "%s_water_ni_joined" %(timestep_names[count])
     print fname, ':', joined.crs, len(joined)
     df_new = gpd.GeoDataFrame(joined.geometry_x) # df1
     df_new['geometry'] = df_new['geometry_x']
@@ -204,7 +219,7 @@ storage_joined.insert(0, storage_merged[0])
 # In[13]:
 
 
-fname = "%s_%s_water_ni_joined" %(sitename, timestep_names[0])
+fname = "%s_water_ni_joined" %(timestep_names[0])
 print fname, ':', storage_joined[0].crs, len(storage_joined[0])
 
 
@@ -237,7 +252,7 @@ for i in storage_joined:
     min_max_count = 0
     for j in sizes:
         print min_max_count
-        classname = "%s_%s_class_0%s" %(sitename, fname, str(j))
+        classname = "%s_class_0%s" %(fname, str(j))
         class_names.append(classname)
         y = i.loc[(minimum[min_max_count] <= i.area) & (i.area < maximum[min_max_count])].copy()
         try: 
