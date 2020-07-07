@@ -9,7 +9,7 @@ PyShore is a python based tool that allows you to detect changes in lake shoreli
 
 ## Workflow
 
-The provided python scripts are doing the following:
+The provided python scripts work as follows:
 
 #### Smoothing_skimage_otsu_median_thresholding_v02_r00.py 
 
