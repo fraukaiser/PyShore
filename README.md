@@ -4,13 +4,13 @@ PyShore is a python based tool that allows you to detect changes in lake shoreli
 
 ## Prerequisites
 
-Technical:
+#### Technical
 
 - Python 2.7+ with the following dependecies (via pip): gdal scikit-image numpy scipy matplotlib geopandas
 
-Formal: 
+#### Formal
 
-Assemble your data in one input folder. It should contain your
+Assemble your data in __one__ input folder. It should contain your
 
 - (multi-temporal) satellite imagery in GeoTIFF format
 - infrastructure data (e.g. OpenStreetMap) in Shapefile format
@@ -18,9 +18,11 @@ Assemble your data in one input folder. It should contain your
 
 The file names of the satellite imagery must begin with the acquisition date, starting with the year, e.g. 16JUL22xxxx.TIF, 20060823xxxx.TIF. etc. Your folder should look similar to this:
 
-`~/0_PyShore_Input$ tree .`
-`├── ORDER_SHAPE_32606.dbf 	# study area image extent to prevent NoData values`
-`├── ORDER_SHAPE_32606.prj`
+>~/0_PyShore_Input$ tree .
+>├── ORDER_SHAPE_32606.dbf 	# study area image extent to prevent NoData values.
+>├── ORDER_SHAPE_32606.prj
+
+
 `├── ORDER_SHAPE_32606.shp`
 `├── ORDER_SHAPE_32606.shx`
 `├── 06AUG15222517-M2AS-058878563040_01_P001_GS_pansharpened_cubic_0.5.TIF	# multi-temporal imagery`
