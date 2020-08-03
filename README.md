@@ -23,8 +23,8 @@ The file names of the satellite imagery must begin with the acquisition date, st
 >├── ORDER_SHAPE_32606.prj
 
 
-`├── ORDER_SHAPE_32606.shp`
-`├── ORDER_SHAPE_32606.shx`
+```├── ORDER_SHAPE_32606.shp
+├── ORDER_SHAPE_32606.shx```
 `├── 06AUG15222517-M2AS-058878563040_01_P001_GS_pansharpened_cubic_0.5.TIF	# multi-temporal imagery`
 `├── 10JUL09221426-M2AS-058878563030_01_P001_GS_pansharpened_cubic_0.5.TIF`
 `├── 13JUL16225401-M2AS-058878563020_01_P001_GS_pansharpened_cubic_0.5.TIF`
