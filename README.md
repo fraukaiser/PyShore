@@ -41,8 +41,8 @@ The file names of the satellite imagery must begin with the acquisition date, st
 ├── gis_osm_roads_free_1.dbf
 ├── gis_osm_roads_free_1.prj
 ├── gis_osm_roads_free_1.shp
-└── gis_osm_roads_free_1.shx```
-
+└── gis_osm_roads_free_1.shx
+```
 
 ## Workflow
 
