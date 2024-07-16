@@ -1,31 +1,39 @@
 # -*- coding: utf-8 -*-
 """
-Edited on Mon Jul  6 11:07:27 2020
+Created on Tue Jul  7 14:22:08 2020
 
-@author: fraukaiser
-
-
-Calculating shoreline movement of multitemporal dataset
-
-Usage: python plotting_shorelines.py <path_in> <sitename>
-
+@author: skaiser
 """
-#%%
+"""
+ * Python script to demonstrate simple adaptive thresholding with Otsu.
+ *
+ * usage: python script.py <path_in> <order-shape> <sitename>
+"""
+#### Imports
 
-####
-## Imports
-####
 
-import os, json, fnmatch, sys
+import os, sys, fnmatch, json
 import numpy as np
+import skimage.color
+import skimage.filters
+import skimage.io
+import skimage.viewer
 from osgeo import gdal, ogr
+import datetime, time
+from skimage.morphology import disk
 import geopandas as gpd
 from shapely.geometry import Point
 from shapely.wkt import loads
-import datetime, time
 from scipy.spatial import distance
 
-#%% Functions
+#%%
+
+start = datetime.datetime.now()
+start_time = time.time()
+
+#%%
+
+#### Functions
 
 def createFolder(directory):  # from https://gist.github.com/keithweaver/562d3caa8650eefe7f84fa074e9ca949
     try:
@@ -46,56 +54,134 @@ def segmentize(geom):
 
 #%%
 
+#path_in = '/path/to/your/input/data/folder'
+#order_shape = '/path/to/your/image/extent/Shapefile.shp'
+
+path_in = sys.argv[1]
+order_shape = sys.argv[2]
+sitename = sys.argv[3]
+
+#### Load satellite images 
+tif_in = []
+
+for root, dirs, files in os.walk(path_in):
+    for file in files:
+        if fnmatch.fnmatch(file, '*.TIF'):
+            filepath = root + '/' + file
+            tif_in.append(filepath)
+
+path_out = path_in
+nir_band = 3 # set number of NIR band
+
+
+#%% Create Folders for Output
+data_out = path_in.rsplit('/', 1)[0] + '/1_PyShore_ProcData/'
+figf_out = path_in.rsplit('/', 1)[0] + '/2_PyShore_Output/'
+cum_out = path_in.rsplit('/', 1)[0] + '/2_PyShore_Output/cum/'
+createFolder(data_out)
+createFolder(figf_out)
+createFolder(cum_out)
+
+#%%
+
+filenames = []
+for i in tif_in:
+    cmd = "gdal_translate -ot Byte -of GTiff %s %s_8B.TIF" %(i, i[:-4])
+    print cmd
+    os.system(cmd)
+    filenames.append("%s_8B.TIF" %i[:-4])
+
+
+#%% Median and Otsu
+value = 5
+clips = []
+for i in filenames:
+    image = skimage.io.imread(fname=i)   # image[rows, columns, dimensions]-> image[:,:,3] is near Infrared
+    nir = image[:,:,nir_band]    
+    
+    bilat_img = skimage.filters.rank.median(nir, disk(value))
+    
+    gtif = gdal.Open(i)
+    geotransform = gtif.GetGeoTransform()
+    sourceSR = gtif.GetProjection()
+    
+    x = np.shape(image)[1]
+    y = np.shape(image)[0]
+    bands = np.shape(image)[2]
+   
+    # blur and grayscale before thresholding
+    blur = skimage.color.rgb2gray(bilat_img)
+    blur = skimage.filters.gaussian(blur, sigma=2.0)
+    
+    t = skimage.filters.threshold_otsu(blur)
+    print t
+    
+    # perform inverse binary thresholding
+    mask = blur < t
+    
+ 
+    #output np array as GeoTiff
+    file_out = '%s/%s_t%s_median%s_otsu.TIF'% (path_out, i.rsplit('/')[-1][:-4], str(t)[0:4], str(value))
+    clips.append(file_out[:-4] + '.shp')
+    dst_ds = gdal.GetDriverByName('GTiff').Create(file_out, x, y, 1, gdal.GDT_Float32)   
+    dst_ds.GetRasterBand(1).WriteArray(mask)
+    dst_ds.SetGeoTransform(geotransform)
+    dst_ds.SetProjection(sourceSR) 
+    dst_ds.FlushCache()
+    dst_ds = None
+    
+    #polygonize and write to Shapefile
+    cmd = 'gdal_polygonize.py %s -f "ESRI Shapefile" %s.shp' %(file_out, file_out[:-4])
+    os.system(cmd)   
+    print cmd
+	
+
+    
+
+for i in clips:
+    cmd = 'ogr2ogr -clipsrc %s -clipsrclayer %s %s_ordershp.shp %s %s -f "ESRI Shapefile"' % (order_shape, order_shape.rsplit('/')[-1][:-4], i[:-4], i, i.rsplit('/')[-1][:-4]) # needs to have this ending *otsu_ordershp.shp
+    print cmd
+    os.system(cmd)
+#%%
+
+now = datetime.datetime.now()
+print 'started at %s,  finished at %s' % (str(start), str(now))  
+print 'Total computing time Otsu and Vectorization: --------------- %s seconds -----------------' % (time.time() - start_time)
+print 'Start Shoreline Change Derivation'
+
+#%%
+
 start = datetime.datetime.now()
 start_time = time.time()
 
 
-# In[2]:
+#%% Load Otsu thresholded Shapefiles and infrastructure data
 
-
-
-#path_in = '/your/path/to/your/input/data'
-path_in = sys.argv[1]
-sitename = sys.argv[2]
-
-
-#### Load satellite images and infrastructure data
 files_in = []
 infrastructure_in = []
-tif_in = []
 
 for root, dirs, files in os.walk(path_in):
     for file in files:
         if fnmatch.fnmatch(file, '*1.shp'):
             filepath = root + '/' + file
             infrastructure_in.append(filepath)
-        elif fnmatch.fnmatch(file, '*otsu_ordershp.shp'):
+        elif fnmatch.fnmatch(file, '*ordershp.shp'):
             filepath = root + '/' + file
             files_in.append(filepath)
-        elif fnmatch.fnmatch(file, '*.TIF'):
-            filepath = root + '/' + file
-            tif_in.append(filepath)
-            
             
 files_in.sort()
 tif_in.sort()
-#print files_in, tif_in, infrastructure_in
+print files_in             #, tif_in, infrastructure_in
 
 gtif = gdal.Open(tif_in[0])
 gtif_info = gtif.GetGeoTransform()
 resolution = gtif_info[1]
+crs = gpd.read_file(files_in[0]).crs
 
 
-site = tif_in[0].rsplit('/')[-1][:-4]
 print "The spatial resolution is %s m" %(str(resolution))
 print 'files_in length: ', len(files_in)
 
-
-#%% Create Folders for Output
-data_out = path_in.rsplit('/', 1)[0] + '/1_PyShore_ProcData/'
-figf_out = path_in.rsplit('/', 1)[0] + '/2_PyShore_Output/'
-createFolder(data_out)
-createFolder(figf_out)
 
 #%% Check for Line Geometries in infrastructure data, buffer and merge
 
@@ -115,6 +201,7 @@ for i in infrastructure_in:
     gdfs.append(gdf)
     
 osm = gdfs[0].append(gdfs[1:])
+osm = osm.to_crs(crs)
 osm.to_file(path_in.rsplit('/', 1)[0] + '/1_PyShore_ProcData/' + 'infrastructuremap.shp')
 
 
@@ -178,6 +265,7 @@ if len(files) == 1:
 
 #%% Merge smaller moist feature to one lake by setting the ref dataset as basis
 
+storage_merged = [storage_infrastructure[0]]
 print len(storage_infrastructure[0])
 for i in storage_infrastructure[1:]:
     x = gpd.sjoin(i, storage_infrastructure[0], op ='intersects', how = 'left')
@@ -222,16 +310,6 @@ storage_joined.insert(0, storage_merged[0])
 fname = "%s_water_ni_joined" %(timestep_names[0])
 print fname, ':', storage_joined[0].crs, len(storage_joined[0])
 
-
-# In[14]:
-
-#
-#for i in storage_joined:
-#    i.plot(color='#FBFAF9', alpha= 0.3, edgecolor= 'darkblue')
-
-
-# ### Define categories by waterbody size
-
 # In[15]:
 
 
@@ -252,7 +330,7 @@ for i in storage_joined:
     min_max_count = 0
     for j in sizes:
         print min_max_count
-        classname = "%s_class_0%s" %(fname, str(j))
+        classname = "%s_%s_class_0%s" %(sitename, fname, str(j))
         class_names.append(classname)
         y = i.loc[(minimum[min_max_count] <= i.area) & (i.area < maximum[min_max_count])].copy()
         try: 
@@ -429,7 +507,7 @@ for y in range(len(class_features_new)-4):  #
 
 #%% Nearest Points for cumulative results:
 
-figf_out = '/permarisk/staff/soraya_kaiser/git2/2_plots/median5/cum/'
+figf_out = cum_out
 
 
 for y in range(8, 16):  # 
